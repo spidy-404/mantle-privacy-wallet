@@ -48,13 +48,13 @@ export default function Home() {
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid md:grid-cols-3 gap-8 mb-16">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
                     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                         <div className="text-3xl mb-4">🔒</div>
                         <h3 className="text-xl font-semibold text-white mb-2">
                             Recipient Privacy
                         </h3>
-                        <p className="text-gray-400">
+                        <p className="text-gray-400 text-sm">
                             Each payment goes to a unique stealth address. Only the recipient can identify and access their funds.
                         </p>
                     </div>
@@ -64,7 +64,7 @@ export default function Home() {
                         <h3 className="text-xl font-semibold text-white mb-2">
                             Non-Interactive
                         </h3>
-                        <p className="text-gray-400">
+                        <p className="text-gray-400 text-sm">
                             Send payments without coordinating with recipients. Just use their public meta-address.
                         </p>
                     </div>
@@ -74,8 +74,18 @@ export default function Home() {
                         <h3 className="text-xl font-semibold text-white mb-2">
                             ERC-5564 Standard
                         </h3>
-                        <p className="text-gray-400">
+                        <p className="text-gray-400 text-sm">
                             Built on the official Ethereum standard for stealth addresses. Fully verifiable on-chain.
+                        </p>
+                    </div>
+
+                    <div className="bg-gray-800 rounded-lg p-6 border border-purple-700">
+                        <div className="text-3xl mb-4">🛡️</div>
+                        <h3 className="text-xl font-semibold text-white mb-2">
+                            Amount Privacy (ZK)
+                        </h3>
+                        <p className="text-gray-400 text-sm">
+                            Hide transaction amounts using zero-knowledge proofs in the shielded pool.
                         </p>
                     </div>
                 </div>
