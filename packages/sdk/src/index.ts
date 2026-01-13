@@ -73,3 +73,14 @@ export {
 } from './zk/prover';
 
 export type { WithdrawInput, Proof, ProofCalldata } from './zk/prover';
+
+// Indexer Client
+export { IndexerClient, createIndexerClient } from './indexer/client';
+
+export type {
+    IndexerConfig,
+    AnnouncementData,
+    DepositData,
+    MerklePathData,
+    IndexerStatus,
+} from './indexer/client';

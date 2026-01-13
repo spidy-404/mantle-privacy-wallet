@@ -11,6 +11,7 @@ import {
     computeCommitment,
     generateWithdrawProof,
     proofToCalldata,
+    createIndexerClient,
 } from '@mantle-privacy/sdk';
 
 const DENOMINATIONS = [
@@ -140,31 +141,50 @@ export default function ShieldPage() {
             const note = JSON.parse(withdrawNote);
             const recipient = withdrawRecipient || address;
 
-            // Get current Merkle root
-            const root = await publicClient!.readContract({
+            // Create indexer client
+            const indexer = createIndexerClient({
+                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'http://localhost:3001',
+            });
+
+            console.log('📡 Fetching Merkle path from indexer...');
+
+            // Get Merkle path for this commitment
+            const merklePath = await indexer.getMerklePath(note.commitment);
+
+            console.log('✅ Merkle path retrieved:', merklePath);
+
+            // Get current Merkle root from contract
+            const contractRoot = await publicClient!.readContract({
                 address: CONTRACTS.ShieldedPool,
                 abi: SHIELDED_POOL_ABI,
                 functionName: 'getRoot',
             });
 
-            // TODO: Get Merkle path from indexer or compute locally
-            // For now, this is a placeholder - full implementation requires
-            // scanning the tree and computing the path
+            console.log('Contract root:', contractRoot);
+            console.log('Merkle path root:', merklePath.root);
+
+            // Verify roots match
+            if (BigInt(merklePath.root) !== contractRoot) {
+                setError('Merkle root mismatch. Tree may be out of sync. Please try again.');
+                return;
+            }
+
             setError(
-                'Withdraw functionality requires Merkle path computation. This will be implemented with the indexer service.'
+                'Merkle path fetched successfully! ZK proof generation requires circuit WASM and zkey files to be loaded in the browser. This will be enabled in a production deployment with proper file hosting.'
             );
 
-            // Example of how withdraw would work:
+            // NOTE: Full withdraw would work like this once circuit files are hosted:
+            //
             // const proof = await generateWithdrawProof({
             //     secret: note.secret,
             //     nullifier: note.nullifier,
-            //     pathElements: merkleProof.pathElements,
-            //     pathIndices: merkleProof.pathIndices,
-            //     root: root.toString(),
+            //     pathElements: merklePath.pathElements,
+            //     pathIndices: merklePath.pathIndices,
+            //     root: merklePath.root,
             //     nullifierHash: note.nullifierHash,
             //     recipient: recipient,
             //     amount: note.amount,
-            // }, wasmPath, zkeyPath);
+            // }, '/circuits/withdraw.wasm', '/circuits/withdraw.zkey');
             //
             // const calldata = proofToCalldata(proof);
             //
@@ -172,8 +192,18 @@ export default function ShieldPage() {
             //     address: CONTRACTS.ShieldedPool,
             //     abi: SHIELDED_POOL_ABI,
             //     functionName: 'withdraw',
-            //     args: [calldata.proof, root, note.nullifierHash, recipient, note.amount],
+            //     args: [
+            //         calldata.proof.map(p => BigInt(p)),
+            //         BigInt(merklePath.root),
+            //         BigInt(note.nullifierHash),
+            //         recipient as `0x${string}`,
+            //         BigInt(note.amount)
+            //     ],
             // });
+            //
+            // console.log('Withdrawal tx:', hash);
+            // await publicClient!.waitForTransactionReceipt({ hash });
+            // setSuccess('Withdrawal successful!');
         } catch (err: any) {
             console.error('Withdraw error:', err);
             setError(err?.message || 'Failed to withdraw');

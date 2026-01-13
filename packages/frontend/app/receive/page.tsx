@@ -9,6 +9,7 @@ import {
     computeStealthPrivateKey,
     checkStealthAddress,
     privateKeyToAddress,
+    createIndexerClient,
 } from '@mantle-privacy/sdk';
 import { parseEther, formatEther } from 'viem';
 import Link from 'next/link';
@@ -57,57 +58,48 @@ export default function ReceivePage() {
             setScanning(true);
             setError('');
 
-            // Get current block number
-            const currentBlock = await publicClient.getBlockNumber();
-            const fromBlock = currentBlock - BigInt(10000); // Scan last ~10k blocks
-
-            console.log(`Scanning from block ${fromBlock} to ${currentBlock}...`);
-
-            // Fetch Announcement events
-            const logs = await publicClient.getLogs({
-                address: CONTRACTS.ERC5564Announcer,
-                event: ANNOUNCER_ABI[0],
-                fromBlock,
-                toBlock: currentBlock,
+            // Use indexer for much faster scanning
+            const indexer = createIndexerClient({
+                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'http://localhost:3001',
             });
 
-            console.log(`Found ${logs.length} announcements`);
+            console.log('📡 Fetching announcements from indexer...');
+
+            // Get announcements from indexer (much faster than direct blockchain scan)
+            const announcements = await indexer.getAnnouncements({ limit: 1000 });
+
+            console.log(`Found ${announcements.length} announcements`);
 
             const discovered: DiscoveredPayment[] = [];
 
             // Check each announcement
-            for (const log of logs) {
-                const { schemeId, stealthAddress, ephemeralPubKey } = log.args;
-
+            for (const announcement of announcements) {
                 // Only process secp256k1 scheme
-                if (schemeId !== BigInt(1)) continue;
+                if (announcement.schemeId !== 1) continue;
 
                 try {
                     // Compute stealth private key
                     const stealthPrivKey = computeStealthPrivateKey(
                         viewingKeypair.privateKey,
                         spendingKeypair.privateKey,
-                        ephemeralPubKey as string
+                        announcement.ephemeralPubKey
                     );
 
                     // Check if this payment is for us
-                    const isForUs = checkStealthAddress(
-                        stealthPrivKey,
-                        stealthAddress as string
-                    );
+                    const isForUs = checkStealthAddress(stealthPrivKey, announcement.stealthAddress);
 
                     if (isForUs) {
                         // Get balance of stealth address
                         const balance = await publicClient.getBalance({
-                            address: stealthAddress as `0x${string}`,
+                            address: announcement.stealthAddress as `0x${string}`,
                         });
 
                         if (balance > 0n) {
                             discovered.push({
-                                stealthAddress: stealthAddress as string,
+                                stealthAddress: announcement.stealthAddress,
                                 stealthPrivateKey: stealthPrivKey,
-                                blockNumber: Number(log.blockNumber),
-                                txHash: log.transactionHash!,
+                                blockNumber: parseInt(announcement.blockNumber),
+                                txHash: announcement.transactionHash,
                                 balance,
                             });
                         }
@@ -119,7 +111,7 @@ export default function ReceivePage() {
             }
 
             setPayments(discovered);
-            console.log(`Discovered ${discovered.length} payments for you`);
+            console.log(`✅ Discovered ${discovered.length} payments for you`);
         } catch (err: any) {
             console.error('Error scanning:', err);
             setError(err?.message || 'Failed to scan for payments');
