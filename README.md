@@ -124,10 +124,14 @@ const payments = await scanAnnouncements({
 
 ### Mantle Sepolia Testnet
 
-Contracts will be deployed to Mantle Sepolia testnet. Addresses will be updated here after deployment.
+Contracts are deployed and verified on Mantle Sepolia testnet:
 
-- **ERC5564Announcer**: `TBD`
-- **StealthPay**: `TBD`
+- **ERC5564Announcer**: [`0x0B7BeA2BD729faD217127610e950F316559C16b6`](https://sepolia.mantlescan.xyz/address/0x0B7BeA2BD729faD217127610e950F316559C16b6)
+- **StealthPay**: [`0x357dd5dc38A3cA13840250FC67D523A62720902f`](https://sepolia.mantlescan.xyz/address/0x357dd5dc38A3cA13840250FC67D523A62720902f)
+
+**Chain ID**: 5003
+**RPC URL**: https://rpc.sepolia.mantle.xyz
+**Explorer**: https://sepolia.mantlescan.xyz
 
 ### Deploying Contracts
 
@@ -204,13 +208,12 @@ pnpm lint
 ## Roadmap
 
 - [x] Phase 0: Project setup and monorepo structure
-- [x] Phase 1: Core stealth addresses (ERC-5564)
+- [x] Phase 1: Core stealth addresses (ERC-5564) - **DEPLOYED TO TESTNET**
 - [ ] Phase 2: Frontend MVP
 - [ ] Phase 3: ZK shielded pool
 - [ ] Phase 4: Indexer service
-- [ ] Phase 5: Mantle testnet deployment
-- [ ] Phase 6: Security audit and privacy hardening
-- [ ] Phase 7: Documentation and testing
+- [ ] Phase 5: Security audit and privacy hardening
+- [ ] Phase 6: Documentation and testing
 
 ## Security
 
