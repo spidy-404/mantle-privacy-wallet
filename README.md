@@ -12,7 +12,7 @@ This protocol enables private, non-interactive transfers of MNT and ERC-20 token
 - ✅ **Web Frontend** - Next.js app with wallet connection and payment flows
 - ✅ **Mantle Network** - Deployed and working on Mantle Sepolia testnet
 - ✅ **Send/Receive** - Full UI for sending and scanning private payments
-- 🔒 **ZK Shielded Pool** (Coming Soon) - Hide transaction amounts using zero-knowledge proofs
+- ✅ **ZK Shielded Pool** - Hide transaction amounts using zero-knowledge proofs (Groth16 + Poseidon)
 - 🔗 **Indexer Service** (Coming Soon) - Fast announcement scanning with API
 
 ## Project Structure
@@ -22,11 +22,11 @@ This is a monorepo containing multiple packages:
 ```
 mantle-privacy-wallet/
 ├── packages/
-│   ├── contracts/          # Foundry smart contracts
-│   ├── sdk/                # TypeScript SDK
-│   ├── circuits/           # ZK circuits (coming soon)
+│   ├── contracts/          # Foundry smart contracts (Stealth + ZK)
+│   ├── sdk/                # TypeScript SDK (crypto + ZK prover)
+│   ├── circuits/           # Circom ZK circuits (Groth16)
 │   ├── indexer/            # Event indexing service (coming soon)
-│   └── frontend/           # Next.js frontend (coming soon)
+│   └── frontend/           # Next.js frontend (fully functional)
 ```
 
 ## Getting Started
@@ -106,9 +106,13 @@ Emits standardized `Announcement` events for stealth payments following the ERC-
 
 Helper contract for sending MNT and ERC-20 tokens to stealth addresses with automatic announcements.
 
-### ShieldedPool (Coming Soon)
+### Groth16Verifier
 
-Zero-knowledge based pool for hiding transaction amounts using Groth16 proofs and Poseidon Merkle trees.
+ZK-SNARK verifier contract auto-generated from the withdraw circuit. Verifies zero-knowledge proofs for shielded withdrawals.
+
+### ShieldedPool
+
+Zero-knowledge based pool for hiding transaction amounts using Groth16 proofs and Poseidon Merkle trees. Supports fixed denominations (0.1, 1, 10 MNT) for deposit/withdrawal with full amount privacy.
 
 ## SDK Usage
 
@@ -147,10 +151,12 @@ const payments = await scanAnnouncements({
 
 ### Mantle Sepolia Testnet
 
-Contracts are deployed and verified on Mantle Sepolia testnet:
+Contracts are deployed on Mantle Sepolia testnet:
 
-- **ERC5564Announcer**: [`0x0B7BeA2BD729faD217127610e950F316559C16b6`](https://sepolia.mantlescan.xyz/address/0x0B7BeA2BD729faD217127610e950F316559C16b6)
-- **StealthPay**: [`0x357dd5dc38A3cA13840250FC67D523A62720902f`](https://sepolia.mantlescan.xyz/address/0x357dd5dc38A3cA13840250FC67D523A62720902f)
+- **ERC5564Announcer**: [`0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259`](https://sepolia.mantlescan.xyz/address/0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259)
+- **StealthPay**: [`0x8370a0f6070A22189CfA5259dF16eF5123b29691`](https://sepolia.mantlescan.xyz/address/0x8370a0f6070A22189CfA5259dF16eF5123b29691)
+- **Groth16Verifier**: [`0xe882083921eA55cC530E48f282756d531c48Ee4c`](https://sepolia.mantlescan.xyz/address/0xe882083921eA55cC530E48f282756d531c48Ee4c)
+- **ShieldedPool**: [`0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19`](https://sepolia.mantlescan.xyz/address/0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19)
 
 **Chain ID**: 5003
 **RPC URL**: https://rpc.sepolia.mantle.xyz
@@ -233,7 +239,7 @@ pnpm lint
 - [x] Phase 0: Project setup and monorepo structure
 - [x] Phase 1: Core stealth addresses (ERC-5564) - **DEPLOYED TO TESTNET**
 - [x] Phase 2: Frontend MVP - **FULLY FUNCTIONAL**
-- [ ] Phase 3: ZK shielded pool
+- [x] Phase 3: ZK shielded pool - **DEPLOYED & WORKING** (deposit functional, withdraw needs indexer)
 - [ ] Phase 4: Indexer service
 - [ ] Phase 5: Security audit and privacy hardening
 - [ ] Phase 6: Documentation and testing

@@ -34,9 +34,10 @@ export const mantleSepolia = defineChain({
  * Deployed contract addresses on Mantle Sepolia
  */
 export const CONTRACTS = {
-    ERC5564Announcer: '0x0B7BeA2BD729faD217127610e950F316559C16b6' as `0x${string}`,
-    StealthPay: '0x357dd5dc38A3cA13840250FC67D523A62720902f' as `0x${string}`,
-    ShieldedPool: '0x0000000000000000000000000000000000000000' as `0x${string}`, // To be deployed
+    ERC5564Announcer: '0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259' as `0x${string}`,
+    StealthPay: '0x8370a0f6070A22189CfA5259dF16eF5123b29691' as `0x${string}`,
+    Groth16Verifier: '0xe882083921eA55cC530E48f282756d531c48Ee4c' as `0x${string}`,
+    ShieldedPool: '0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19' as `0x${string}`,
 } as const;
 
 /**
