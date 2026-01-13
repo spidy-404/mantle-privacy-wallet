@@ -1,0 +1,82 @@
+// Prisma schema for Mantle Privacy Wallet Indexer
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ERC-5564 Announcement events
+model Announcement {
+  id                String   @id @default(cuid())
+  blockNumber       BigInt
+  blockTimestamp    DateTime
+  transactionHash   String
+  logIndex          Int
+
+  schemeId          Int
+  stealthAddress    String
+  caller            String
+  ephemeralPubKey   String   @db.Text
+  metadata          String   @db.Text
+
+  // Indexes for fast queries
+  @@index([blockNumber])
+  @@index([stealthAddress])
+  @@index([blockTimestamp])
+  @@unique([transactionHash, logIndex])
+}
+
+// ShieldedPool deposit events
+model Deposit {
+  id                String   @id @default(cuid())
+  blockNumber       BigInt
+  blockTimestamp    DateTime
+  transactionHash   String
+  logIndex          Int
+
+  commitment        String   @unique
+  leafIndex         BigInt   @unique
+  amount            String   // Store as string to preserve precision
+  depositor         String
+
+  // Merkle tree position
+  isWithdrawn       Boolean  @default(false)
+
+  // Indexes for fast queries
+  @@index([blockNumber])
+  @@index([commitment])
+  @@index([leafIndex])
+  @@index([blockTimestamp])
+  @@unique([transactionHash, logIndex])
+}
+
+// Withdrawal events for nullifier tracking
+model Withdrawal {
+  id                String   @id @default(cuid())
+  blockNumber       BigInt
+  blockTimestamp    DateTime
+  transactionHash   String
+  logIndex          Int
+
+  nullifierHash     String   @unique
+  recipient         String
+  amount            String
+
+  // Indexes
+  @@index([blockNumber])
+  @@index([nullifierHash])
+  @@index([recipient])
+  @@index([blockTimestamp])
+  @@unique([transactionHash, logIndex])
+}
+
+// Scanner state to track sync progress
+model ScannerState {
+  id                Int      @id @default(1)
+  lastBlockScanned  BigInt
+  lastUpdateTime    DateTime @updatedAt
+}
