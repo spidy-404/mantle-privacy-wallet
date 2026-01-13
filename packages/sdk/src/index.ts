@@ -4,20 +4,59 @@
  */
 
 // Crypto utilities
-export * from './crypto/keys';
-export * from './crypto/ecdh';
-export * from './crypto/stealth';
+export {
+    generateKeypair,
+    generateViewingKeypair,
+    generateSpendingKeypair,
+    derivePublicKey,
+    generateStealthMetaAddress,
+    parseStealthMetaAddress,
+    compressPublicKey,
+    uncompressPublicKey,
+    serializeKeypair,
+    deserializeKeypair,
+} from './crypto/keys';
 
-// Contract interactions
-export * from './contracts/announcer';
-export * from './contracts/stealthPay';
+export {
+    computeSharedSecret,
+    computeSharedSecretSender,
+    computeSharedSecretRecipient,
+    generateViewTag,
+} from './crypto/ecdh';
 
-// Event scanning
-export * from './scanner/eventScanner';
+export {
+    generateStealthAddress,
+    computeStealthPrivateKey,
+    checkStealthAddress,
+    privateKeyToAddress,
+} from './crypto/stealth';
 
 // Types
-export * from './types';
+export type {
+    Keypair,
+    StealthMetaAddress,
+    StealthAddressInfo,
+    StealthPayment,
+    ScanConfig,
+    AnnouncementEvent,
+    KeyGenerationOptions,
+} from './types';
 
 // Utilities
-export * from './utils/encoding';
-export * from './utils/validation';
+export {
+    toHex,
+    fromHex,
+    ensureHexPrefix,
+    removeHexPrefix,
+    padHex,
+    concatHex,
+    hexEqual,
+} from './utils/encoding';
+
+export {
+    validateAddress,
+    validateHexString,
+    validatePrivateKey,
+    validatePublicKey,
+    validateStealthMetaAddress,
+} from './utils/validation';
