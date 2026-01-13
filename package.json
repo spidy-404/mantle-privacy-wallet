@@ -1,0 +1,35 @@
+{
+  "name": "mantle-privacy-wallet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Umbra-style stealth payments protocol on Mantle Network",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "contracts:test": "pnpm --filter @mantle-privacy/contracts test",
+    "contracts:deploy": "pnpm --filter @mantle-privacy/contracts deploy",
+    "sdk:test": "pnpm --filter @mantle-privacy/sdk test",
+    "frontend:dev": "pnpm --filter @mantle-privacy/frontend dev"
+  },
+  "keywords": [
+    "ethereum",
+    "mantle",
+    "privacy",
+    "stealth-addresses",
+    "erc-5564",
+    "zero-knowledge"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.18.2",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "turbo": "^2.7.4"
+  }
+}

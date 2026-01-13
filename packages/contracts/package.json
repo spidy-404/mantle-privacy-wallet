@@ -1,0 +1,18 @@
+{
+  "name": "@mantle-privacy/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart contracts for Mantle stealth payments protocol",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vvv",
+    "test:gas": "forge test --gas-report",
+    "coverage": "forge coverage",
+    "snapshot": "forge snapshot",
+    "deploy": "forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast --verify",
+    "deploy:local": "forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast",
+    "deploy:testnet": "forge script script/Deploy.s.sol --rpc-url mantle_sepolia --broadcast --verify",
+    "clean": "forge clean",
+    "lint": "forge fmt --check"
+  }
+}
