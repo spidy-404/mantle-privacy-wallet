@@ -9,10 +9,11 @@ This protocol enables private, non-interactive transfers of MNT and ERC-20 token
 ## Features
 
 - ✅ **ERC-5564 Stealth Addresses** - Hide recipient identity using elliptic curve cryptography
+- ✅ **Web Frontend** - Next.js app with wallet connection and payment flows
+- ✅ **Mantle Network** - Deployed and working on Mantle Sepolia testnet
+- ✅ **Send/Receive** - Full UI for sending and scanning private payments
 - 🔒 **ZK Shielded Pool** (Coming Soon) - Hide transaction amounts using zero-knowledge proofs
-- 🚀 **Mantle Network** - Deployed on Mantle Sepolia testnet
-- 📱 **User-Friendly UI** (Coming Soon) - Next.js frontend for easy interaction
-- 🔗 **Indexer Service** (Coming Soon) - Fast announcement scanning
+- 🔗 **Indexer Service** (Coming Soon) - Fast announcement scanning with API
 
 ## Project Structure
 
@@ -72,6 +73,28 @@ pnpm contracts:test
 # Test SDK
 pnpm sdk:test
 ```
+
+### Running the Frontend
+
+```bash
+# Navigate to frontend package
+cd packages/frontend
+
+# Start development server
+pnpm dev
+
+# Open http://localhost:3000 in your browser
+```
+
+**Using the App:**
+
+1. **Connect Wallet**: Click "Connect Wallet" and connect MetaMask to Mantle Sepolia
+2. **Generate Keys**: Go to "Keys" page and generate your stealth keypairs
+3. **Get Testnet MNT**: Visit [Mantle Faucet](https://faucet.mantle.xyz) for test tokens
+4. **Share Meta-Address**: Copy your stealth meta-address from the Keys page
+5. **Send Payment**: Go to "Send", enter recipient's meta-address and amount
+6. **Receive Payment**: Go to "Receive" and click "Scan for Payments"
+7. **Withdraw**: Click "Withdraw" on any discovered payments
 
 ## Smart Contracts
 
@@ -209,7 +232,7 @@ pnpm lint
 
 - [x] Phase 0: Project setup and monorepo structure
 - [x] Phase 1: Core stealth addresses (ERC-5564) - **DEPLOYED TO TESTNET**
-- [ ] Phase 2: Frontend MVP
+- [x] Phase 2: Frontend MVP - **FULLY FUNCTIONAL**
 - [ ] Phase 3: ZK shielded pool
 - [ ] Phase 4: Indexer service
 - [ ] Phase 5: Security audit and privacy hardening
