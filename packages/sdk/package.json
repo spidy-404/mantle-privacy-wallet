@@ -27,10 +27,13 @@
   "dependencies": {
     "@noble/curves": "^1.7.0",
     "@noble/hashes": "^1.6.1",
-    "ethers": "^6.13.0"
+    "circomlibjs": "^0.1.7",
+    "ethers": "^6.13.0",
+    "snarkjs": "^0.7.6"
   },
   "devDependencies": {
     "@types/node": "^20.17.12",
+    "@types/snarkjs": "^0.7.9",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"

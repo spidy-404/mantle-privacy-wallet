@@ -60,3 +60,16 @@ export {
     validatePublicKey,
     validateStealthMetaAddress,
 } from './utils/validation';
+
+// ZK Prover
+export {
+    generateWithdrawProof,
+    proofToCalldata,
+    verifyProof,
+    computeCommitment,
+    computeNullifierHash,
+    randomFieldElement,
+    generateDepositNote,
+} from './zk/prover';
+
+export type { WithdrawInput, Proof, ProofCalldata } from './zk/prover';
