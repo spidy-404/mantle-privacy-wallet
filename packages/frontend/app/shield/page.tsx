@@ -169,41 +169,56 @@ export default function ShieldPage() {
                 return;
             }
 
-            setError(
-                'Merkle path fetched successfully! ZK proof generation requires circuit WASM and zkey files to be loaded in the browser. This will be enabled in a production deployment with proper file hosting.'
-            );
+            console.log('✅ Merkle root verified!');
 
-            // NOTE: Full withdraw would work like this once circuit files are hosted:
-            //
-            // const proof = await generateWithdrawProof({
-            //     secret: note.secret,
-            //     nullifier: note.nullifier,
-            //     pathElements: merklePath.pathElements,
-            //     pathIndices: merklePath.pathIndices,
-            //     root: merklePath.root,
-            //     nullifierHash: note.nullifierHash,
-            //     recipient: recipient,
-            //     amount: note.amount,
-            // }, '/circuits/withdraw.wasm', '/circuits/withdraw.zkey');
-            //
-            // const calldata = proofToCalldata(proof);
-            //
-            // const hash = await walletClient.writeContract({
-            //     address: CONTRACTS.ShieldedPool,
-            //     abi: SHIELDED_POOL_ABI,
-            //     functionName: 'withdraw',
-            //     args: [
-            //         calldata.proof.map(p => BigInt(p)),
-            //         BigInt(merklePath.root),
-            //         BigInt(note.nullifierHash),
-            //         recipient as `0x${string}`,
-            //         BigInt(note.amount)
-            //     ],
-            // });
-            //
-            // console.log('Withdrawal tx:', hash);
-            // await publicClient!.waitForTransactionReceipt({ hash });
-            // setSuccess('Withdrawal successful!');
+            // Circuit files hosted on GitHub Releases
+            const CIRCUIT_WASM_URL = 'https://github.com/spidy-404/mantle-privacy-wallet/releases/download/v1.0.0-circuits/withdraw.wasm';
+            const CIRCUIT_ZKEY_URL = 'https://github.com/spidy-404/mantle-privacy-wallet/releases/download/v1.0.0-circuits/withdraw.zkey';
+
+            console.log('🔐 Generating ZK proof... (this may take 30-60 seconds)');
+            setError('Generating ZK proof... This may take 30-60 seconds. Please wait.');
+
+            // Generate ZK proof
+            const proof = await generateWithdrawProof({
+                secret: note.secret,
+                nullifier: note.nullifier,
+                pathElements: merklePath.pathElements,
+                pathIndices: merklePath.pathIndices,
+                root: merklePath.root,
+                nullifierHash: note.nullifierHash,
+                recipient: recipient,
+                amount: note.amount,
+            }, CIRCUIT_WASM_URL, CIRCUIT_ZKEY_URL);
+
+            console.log('✅ ZK proof generated!', proof);
+
+            // Convert proof to calldata format
+            const calldata = proofToCalldata(proof);
+
+            console.log('📝 Submitting withdrawal transaction...');
+            setError('Proof generated! Submitting withdrawal transaction...');
+
+            // Submit withdrawal transaction
+            const hash = await walletClient.writeContract({
+                address: CONTRACTS.ShieldedPool,
+                abi: SHIELDED_POOL_ABI,
+                functionName: 'withdraw',
+                args: [
+                    calldata.proof.map(p => BigInt(p)) as unknown as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint],
+                    BigInt(merklePath.root),
+                    BigInt(note.nullifierHash),
+                    recipient as `0x${string}`,
+                    BigInt(note.amount)
+                ],
+            });
+
+            console.log('Withdrawal tx:', hash);
+
+            // Wait for confirmation
+            await publicClient!.waitForTransactionReceipt({ hash });
+
+            setError('');
+            setSuccess(`Withdrawal successful! ${formatEther(BigInt(note.amount))} MNT sent to ${recipient}. Transaction: ${hash}`);
         } catch (err: any) {
             console.error('Withdraw error:', err);
             setError(err?.message || 'Failed to withdraw');
