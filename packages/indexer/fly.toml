@@ -1,0 +1,60 @@
+# Fly.io configuration for Mantle Privacy Indexer
+app = "mantle-privacy-indexer"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  WS_PORT = "3002"
+  RPC_URL = "https://rpc.sepolia.mantle.xyz"
+  CHAIN_ID = "5003"
+  ERC5564_ANNOUNCER_ADDRESS = "0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259"
+  SHIELDED_POOL_ADDRESS = "0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19"
+  START_BLOCK = "11394476"
+  BLOCKS_PER_SCAN = "1000"
+  SCAN_INTERVAL = "5000"
+  NODE_ENV = "production"
+
+[[services]]
+  internal_port = 3001
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["http", "tls"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "10s"
+    method = "get"
+    path = "/health"
+
+[[services]]
+  internal_port = 3002
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+
+  [[services.ports]]
+    port = 3002
+    handlers = ["http"]
+
+[metrics]
+  port = 9091
+  path = "/metrics"

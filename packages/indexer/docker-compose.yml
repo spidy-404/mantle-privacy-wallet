@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  indexer:
+    build:
+      context: ../..
+      dockerfile: packages/indexer/Dockerfile
+    container_name: mantle-privacy-indexer
+    restart: unless-stopped
+    ports:
+      - "3001:3001"  # REST API
+      - "3002:3002"  # WebSocket
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RPC_URL=${RPC_URL:-https://rpc.sepolia.mantle.xyz}
+      - ERC5564_ANNOUNCER_ADDRESS=${ERC5564_ANNOUNCER_ADDRESS:-0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259}
+      - SHIELDED_POOL_ADDRESS=${SHIELDED_POOL_ADDRESS:-0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19}
+      - CHAIN_ID=${CHAIN_ID:-5003}
+      - START_BLOCK=${START_BLOCK:-11394476}
+      - BLOCKS_PER_SCAN=${BLOCKS_PER_SCAN:-1000}
+      - SCAN_INTERVAL=${SCAN_INTERVAL:-5000}
+      - PORT=${PORT:-3001}
+      - WS_PORT=${WS_PORT:-3002}
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - indexer-network
+
+networks:
+  indexer-network:
+    driver: bridge

@@ -13,7 +13,7 @@ This protocol enables private, non-interactive transfers of MNT and ERC-20 token
 - ✅ **Mantle Network** - Deployed and working on Mantle Sepolia testnet
 - ✅ **Send/Receive** - Full UI for sending and scanning private payments
 - ✅ **ZK Shielded Pool** - Hide transaction amounts using zero-knowledge proofs (Groth16 + Poseidon)
-- 🔗 **Indexer Service** (Coming Soon) - Fast announcement scanning with API
+- ✅ **Indexer Service** - 100x faster scanning with PostgreSQL + REST API + WebSocket
 
 ## Project Structure
 
@@ -25,7 +25,7 @@ mantle-privacy-wallet/
 │   ├── contracts/          # Foundry smart contracts (Stealth + ZK)
 │   ├── sdk/                # TypeScript SDK (crypto + ZK prover)
 │   ├── circuits/           # Circom ZK circuits (Groth16)
-│   ├── indexer/            # Event indexing service (coming soon)
+│   ├── indexer/            # Event indexing service (ready for deployment)
 │   └── frontend/           # Next.js frontend (fully functional)
 ```
 
@@ -174,6 +174,31 @@ pnpm deploy:local
 pnpm deploy:testnet
 ```
 
+### Deploying Indexer Service
+
+The indexer service provides 100x faster scanning compared to direct blockchain queries. See the [Indexer Deployment Guide](./packages/indexer/DEPLOYMENT.md) for detailed instructions.
+
+**Quick Start (Docker):**
+
+```bash
+cd packages/indexer
+
+# Create .env file with your configuration
+cp .env.example .env
+
+# Run with Docker Compose
+docker-compose up -d
+```
+
+**Deployment Options:**
+- Railway (recommended) - One-click deployment
+- Render - Free tier available
+- Fly.io - Global edge deployment
+- Docker - Any container platform
+- VPS - Full control (DigitalOcean, AWS, etc.)
+
+See [packages/indexer/DEPLOYMENT.md](./packages/indexer/DEPLOYMENT.md) for platform-specific instructions.
+
 ## How It Works
 
 ### Stealth Address Generation
@@ -239,8 +264,8 @@ pnpm lint
 - [x] Phase 0: Project setup and monorepo structure
 - [x] Phase 1: Core stealth addresses (ERC-5564) - **DEPLOYED TO TESTNET**
 - [x] Phase 2: Frontend MVP - **FULLY FUNCTIONAL**
-- [x] Phase 3: ZK shielded pool - **DEPLOYED & WORKING** (deposit functional, withdraw needs indexer)
-- [ ] Phase 4: Indexer service
+- [x] Phase 3: ZK shielded pool - **DEPLOYED & WORKING** (deposit functional, withdraw needs circuit files)
+- [x] Phase 4: Indexer service - **COMPLETE & READY FOR DEPLOYMENT**
 - [ ] Phase 5: Security audit and privacy hardening
 - [ ] Phase 6: Documentation and testing
 

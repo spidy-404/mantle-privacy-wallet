@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: mantle-privacy-indexer
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd packages/indexer && pnpm install && pnpm prisma generate && pnpm build
+    startCommand: cd packages/indexer && node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: RPC_URL
+        value: https://rpc.sepolia.mantle.xyz
+      - key: CHAIN_ID
+        value: 5003
+      - key: ERC5564_ANNOUNCER_ADDRESS
+        value: 0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259
+      - key: SHIELDED_POOL_ADDRESS
+        value: 0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19
+      - key: START_BLOCK
+        value: 11394476
+      - key: BLOCKS_PER_SCAN
+        value: 1000
+      - key: SCAN_INTERVAL
+        value: 5000
+      - key: PORT
+        value: 3001
+      - key: WS_PORT
+        value: 3002
+      - key: NODE_ENV
+        value: production
