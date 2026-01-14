@@ -123,14 +123,16 @@ export async function verifyProof(proof: Proof, vkeyPath: string): Promise<boole
  * @param amount The amount value
  * @returns The commitment hash
  */
-export function computeCommitment(
+export async function computeCommitment(
     secret: bigint,
     nullifier: bigint,
     amount: bigint
-): bigint {
-    // Import poseidon from circomlibjs
-    const poseidon = require('circomlibjs').poseidon;
-    return poseidon([secret, nullifier, amount]);
+): Promise<bigint> {
+    // Dynamic import for browser compatibility
+    const { buildPoseidon } = await import('circomlibjs');
+    const poseidon = await buildPoseidon();
+    const hash = poseidon.F.toString(poseidon([secret, nullifier, amount]));
+    return BigInt(hash);
 }
 
 /**
@@ -138,9 +140,11 @@ export function computeCommitment(
  * @param nullifier The nullifier value
  * @returns The nullifier hash
  */
-export function computeNullifierHash(nullifier: bigint): bigint {
-    const poseidon = require('circomlibjs').poseidon;
-    return poseidon([nullifier]);
+export async function computeNullifierHash(nullifier: bigint): Promise<bigint> {
+    const { buildPoseidon } = await import('circomlibjs');
+    const poseidon = await buildPoseidon();
+    const hash = poseidon.F.toString(poseidon([nullifier]));
+    return BigInt(hash);
 }
 
 /**
@@ -168,11 +172,11 @@ export function randomFieldElement(): bigint {
  * @param amount The amount to deposit
  * @returns Deposit note with secret, nullifier, and commitment
  */
-export function generateDepositNote(amount: bigint) {
+export async function generateDepositNote(amount: bigint) {
     const secret = randomFieldElement();
     const nullifier = randomFieldElement();
-    const commitment = computeCommitment(secret, nullifier, amount);
-    const nullifierHash = computeNullifierHash(nullifier);
+    const commitment = await computeCommitment(secret, nullifier, amount);
+    const nullifierHash = await computeNullifierHash(nullifier);
 
     return {
         secret: secret.toString(),

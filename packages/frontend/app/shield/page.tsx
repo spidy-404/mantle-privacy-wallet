@@ -83,7 +83,7 @@ export default function ShieldPage() {
             const amount = parseEther(selectedDenomination);
 
             // Generate deposit note
-            const note = generateDepositNote(BigInt(amount.toString()));
+            const note = await generateDepositNote(BigInt(amount.toString()));
 
             // Deposit to pool
             const hash = await walletClient.writeContract({

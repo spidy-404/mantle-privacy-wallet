@@ -5,7 +5,7 @@
 
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { keccak_256 } from '@noble/hashes/sha3';
-import { computeAddress } from 'ethers';
+import { getAddress } from 'ethers';
 import type { StealthMetaAddress, StealthAddressInfo, Keypair } from '../types';
 import { generateKeypair, parseStealthMetaAddress, uncompressPublicKey } from './keys';
 import { computeSharedSecretSender, computeSharedSecretRecipient, generateViewTag } from './ecdh';
@@ -182,7 +182,7 @@ function publicKeyToAddress(publicKey: string): string {
     const address = ensureHexPrefix(Buffer.from(addressBytes).toString('hex'));
 
     // Return checksummed address
-    return computeAddress(address);
+    return getAddress(address);
 }
 
 /**

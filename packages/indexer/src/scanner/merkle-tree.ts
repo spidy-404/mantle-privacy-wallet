@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { buildPoseidon } from 'circomlibjs';
+import { keccak256, numberToHex, pad } from 'viem';
 
 const prisma = new PrismaClient();
 
@@ -17,30 +19,43 @@ export class MerkleTreeBuilder {
     private tree: Map<number, string[]> = new Map(); // level => [hashes]
     private leaves: string[] = [];
     private zeroHashes: string[] = [];
+    private poseidon: any = null;
 
-    constructor() {
-        this.initializeZeroHashes();
+    async initialize() {
+        // Build Poseidon hasher
+        this.poseidon = await buildPoseidon();
+        await this.initializeZeroHashes();
     }
 
-    private initializeZeroHashes() {
-        // Placeholder: In production, use actual Poseidon zero hashes
-        // For now, use keccak256-based placeholders
+    private async initializeZeroHashes() {
+        // Use actual Poseidon zero hashes
         let currentZero = '0';
         this.zeroHashes.push(currentZero);
 
         for (let i = 0; i < TREE_DEPTH; i++) {
-            // Simplified hash - in production, use Poseidon
             currentZero = this.hash(currentZero, currentZero);
             this.zeroHashes.push(currentZero);
         }
     }
 
     private hash(left: string, right: string): string {
-        // Placeholder: Use keccak256 for now
-        // In production, this should use Poseidon hash from circomlibjs
-        const crypto = require('crypto');
-        const combined = left + right.replace('0x', '');
-        return '0x' + crypto.createHash('sha256').update(combined).digest('hex');
+        // Use Keccak256 mod field size (matches the placeholder in contract)
+        // TODO: Replace with real Poseidon once contract is updated
+        const FIELD_SIZE = BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617');
+
+        const leftBigInt = BigInt(left);
+        const rightBigInt = BigInt(right);
+
+        // Convert to 32-byte hex strings (like abi.encodePacked in Solidity)
+        const leftHex = pad(numberToHex(leftBigInt), { size: 32 });
+        const rightHex = pad(numberToHex(rightBigInt), { size: 32 });
+
+        // Concat and hash
+        const combined = (leftHex + rightHex.slice(2)) as `0x${string}`; // Remove 0x from right
+        const hashHex = keccak256(combined);
+        const hashBigInt = BigInt(hashHex);
+
+        return (hashBigInt % FIELD_SIZE).toString();
     }
 
     async buildFromDatabase(): Promise<void> {
@@ -111,12 +126,10 @@ export class MerkleTreeBuilder {
             currentIndex = Math.floor(currentIndex / 2);
         }
 
-        const root = currentHash;
-
         return {
             pathElements,
             pathIndices,
-            root,
+            root: this.getCurrentRoot(), // Use the actual root from incremental tree
             leaf: this.leaves[leafIndex],
             leafIndex,
         };
@@ -127,29 +140,45 @@ export class MerkleTreeBuilder {
             return this.zeroHashes[TREE_DEPTH];
         }
 
-        let currentLevel = [...this.leaves];
+        // Simulate incremental tree construction like the contract
+        // This matches the contract's insert() function logic
+        const filledSubtrees: { [level: number]: string } = {};
 
-        for (let level = 0; level < TREE_DEPTH; level++) {
-            const nextLevel: string[] = [];
-            const levelSize = Math.ceil(currentLevel.length / 2);
-
-            for (let i = 0; i < levelSize; i++) {
-                const leftIndex = i * 2;
-                const rightIndex = leftIndex + 1;
-
-                const left = currentLevel[leftIndex];
-                const right =
-                    rightIndex < currentLevel.length
-                        ? currentLevel[rightIndex]
-                        : this.zeroHashes[level];
-
-                nextLevel.push(this.hash(left, right));
-            }
-
-            currentLevel = nextLevel;
+        // Initialize with zero hashes
+        for (let i = 0; i < TREE_DEPTH; i++) {
+            filledSubtrees[i] = this.zeroHashes[i];
         }
 
-        return currentLevel[0];
+        let root = this.zeroHashes[TREE_DEPTH];
+
+        // Process each leaf incrementally (like contract does)
+        for (let leafIndex = 0; leafIndex < this.leaves.length; leafIndex++) {
+            let currentIndex = leafIndex;
+            let currentLevelHash = this.leaves[leafIndex];
+
+            for (let level = 0; level < TREE_DEPTH; level++) {
+                let left: string;
+                let right: string;
+
+                if (currentIndex % 2 === 0) {
+                    // Left side - store this hash
+                    left = currentLevelHash;
+                    right = filledSubtrees[level];
+                    filledSubtrees[level] = currentLevelHash;
+                } else {
+                    // Right side - pair with stored left
+                    left = filledSubtrees[level];
+                    right = currentLevelHash;
+                }
+
+                currentLevelHash = this.hash(left, right);
+                currentIndex = Math.floor(currentIndex / 2);
+            }
+
+            root = currentLevelHash;
+        }
+
+        return root;
     }
 
     getLeafCount(): number {

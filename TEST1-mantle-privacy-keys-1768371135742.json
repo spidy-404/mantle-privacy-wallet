@@ -1,0 +1,18 @@
+{
+  "viewingKeypair": {
+    "privateKey": "0xb0214404196dfe529ac5f8897a539986bc0d7fa549bb73aea5ad090933ff0975",
+    "publicKey": "0x04fb3b0d4895e839d19e3684f488a6638e78746483e9a4b3ef276e1d2e1c4e078c2b9572ad4ac3af5a176751f3452c7a844d27f7e3693ea303bf5da86256550595",
+    "compressedPublicKey": "0x03fb3b0d4895e839d19e3684f488a6638e78746483e9a4b3ef276e1d2e1c4e078c"
+  },
+  "spendingKeypair": {
+    "privateKey": "0x74f2c4f5761d3edc123bd084a2c21294a1e0490566e4e8abfba64f652b2b79ea",
+    "publicKey": "0x0420f19ba2abcc98fdcf0ce4eb3b191dfb2fd73500f65c6219c8c850d38b408d48efe76d6e4920f86030199b1ebf41ee83336b073c50fc04b37db0084fa093ed90",
+    "compressedPublicKey": "0x0220f19ba2abcc98fdcf0ce4eb3b191dfb2fd73500f65c6219c8c850d38b408d48"
+  },
+  "stealthMetaAddress": {
+    "viewingPublicKey": "0x03fb3b0d4895e839d19e3684f488a6638e78746483e9a4b3ef276e1d2e1c4e078c",
+    "spendingPublicKey": "0x0220f19ba2abcc98fdcf0ce4eb3b191dfb2fd73500f65c6219c8c850d38b408d48",
+    "encoded": "0x03fb3b0d4895e839d19e3684f488a6638e78746483e9a4b3ef276e1d2e1c4e078c:0x0220f19ba2abcc98fdcf0ce4eb3b191dfb2fd73500f65c6219c8c850d38b408d48"
+  },
+  "timestamp": "2026-01-14T06:12:15.742Z"
+}

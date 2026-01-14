@@ -33,6 +33,9 @@ export class EventScanner {
     async start() {
         console.log('🔍 Starting event scanner...');
 
+        // Get current blockchain height
+        const currentBlock = await publicClient.getBlockNumber();
+
         // Get last scanned block
         let state = await prisma.scannerState.findUnique({ where: { id: 1 } });
         if (!state) {
@@ -44,6 +47,26 @@ export class EventScanner {
                     lastUpdateTime: new Date(),
                 },
             });
+        }
+
+        // If we're too far behind, skip ahead to stay current
+        const maxBlocksBehind = BigInt(process.env.MAX_BLOCKS_BEHIND || '10000');
+        const skipAheadBuffer = BigInt(process.env.SKIP_AHEAD_BUFFER || '5000');
+        const blocksBehind = currentBlock - state.lastBlockScanned;
+
+        if (maxBlocksBehind > 0n && blocksBehind > maxBlocksBehind) {
+            const newStartBlock = currentBlock - skipAheadBuffer;
+            console.log(
+                `⚠️  Indexer is ${blocksBehind} blocks behind (max: ${maxBlocksBehind})`
+            );
+            console.log(
+                `   Skipping ahead to block ${newStartBlock} to prioritize recent transactions`
+            );
+            await prisma.scannerState.update({
+                where: { id: 1 },
+                data: { lastBlockScanned: newStartBlock },
+            });
+            state.lastBlockScanned = newStartBlock;
         }
 
         console.log(`📍 Resuming from block ${state.lastBlockScanned}`);

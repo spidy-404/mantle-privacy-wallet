@@ -10,6 +10,7 @@ async function main() {
     // Initialize Merkle tree
     console.log('1️⃣  Initializing Merkle tree...');
     const merkleTree = new MerkleTreeBuilder();
+    await merkleTree.initialize(); // Initialize Poseidon hasher
     await merkleTree.buildFromDatabase();
     console.log(`   Root: ${merkleTree.getCurrentRoot()}`);
     console.log(`   Leaves: ${merkleTree.getLeafCount()}\n`);

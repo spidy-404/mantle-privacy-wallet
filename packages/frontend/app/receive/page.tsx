@@ -11,7 +11,8 @@ import {
     privateKeyToAddress,
     createIndexerClient,
 } from '@mantle-privacy/sdk';
-import { parseEther, formatEther } from 'viem';
+import { parseEther, formatEther, createWalletClient, http } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
 import Link from 'next/link';
 
 interface DiscoveredPayment {
@@ -121,7 +122,7 @@ export default function ReceivePage() {
     };
 
     const withdrawPayment = async (payment: DiscoveredPayment) => {
-        if (!walletClient || !address) {
+        if (!address) {
             setError('Wallet not connected');
             return;
         }
@@ -130,35 +131,39 @@ export default function ReceivePage() {
             setWithdrawing(payment.stealthAddress);
             setError('');
 
+            // Create wallet client with stealth private key
+            const stealthAccount = privateKeyToAccount(payment.stealthPrivateKey as `0x${string}`);
+            const stealthWalletClient = createWalletClient({
+                account: stealthAccount,
+                chain: mantleSepolia,
+                transport: http(),
+            });
+
             // Get the balance to withdraw
             const balance = await publicClient!.getBalance({
                 address: payment.stealthAddress as `0x${string}`,
             });
 
-            // Estimate gas
-            const gasEstimate = await publicClient!.estimateGas({
-                account: payment.stealthAddress as `0x${string}`,
-                to: address,
-                value: balance,
-            });
+            // Mantle L2 has significant L1 data fees on top of L2 execution gas
+            // Reserve 10% of balance for gas to be safe
+            const gasReserve = (balance * 10n) / 100n;
 
-            const gasPrice = await publicClient!.getGasPrice();
-            const gasCost = gasEstimate * gasPrice;
-
-            // Amount to send (balance minus gas)
-            const amountToSend = balance - gasCost - parseEther('0.0001'); // Small buffer
+            // Amount to send (balance minus gas reserve)
+            const amountToSend = balance - gasReserve;
 
             if (amountToSend <= 0n) {
                 setError('Balance too low to cover gas costs');
                 return;
             }
 
-            // Send transaction from stealth address to main wallet
-            const hash = await walletClient.sendTransaction({
-                account: payment.stealthAddress as `0x${string}`,
+            console.log('Balance:', formatEther(balance), 'MNT');
+            console.log('Gas reserve:', formatEther(gasReserve), 'MNT');
+            console.log('Sending:', formatEther(amountToSend), 'MNT');
+
+            // Send transaction from stealth address to main wallet using stealth private key
+            const hash = await stealthWalletClient.sendTransaction({
                 to: address,
                 value: amountToSend,
-                kzg: undefined,
             });
 
             console.log('Withdrawal tx:', hash);
