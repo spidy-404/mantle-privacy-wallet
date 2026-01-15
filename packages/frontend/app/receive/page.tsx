@@ -61,7 +61,7 @@ export default function ReceivePage() {
 
             // Use indexer for much faster scanning
             const indexer = createIndexerClient({
-                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'http://localhost:3001',
+                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'https://indexer-mantle.onrender.com',
             });
 
             console.log('📡 Fetching announcements from indexer...');

@@ -36,8 +36,8 @@ export const mantleSepolia = defineChain({
 export const CONTRACTS = {
     ERC5564Announcer: '0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259' as `0x${string}`,
     StealthPay: '0x8370a0f6070A22189CfA5259dF16eF5123b29691' as `0x${string}`,
-    Groth16Verifier: '0xe882083921eA55cC530E48f282756d531c48Ee4c' as `0x${string}`,
-    ShieldedPool: '0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19' as `0x${string}`,
+    Groth16Verifier: '0x7B2d12C6455F6bdD9Cdd97e57e6ECbF2aD1efaB6' as `0x${string}`,
+    ShieldedPool: '0xc6277cF453bE422e6BC04D4ff171840069c845f2' as `0x${string}`,
 } as const;
 
 /**

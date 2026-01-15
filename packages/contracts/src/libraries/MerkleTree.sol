@@ -108,7 +108,7 @@ library MerkleTree {
     /// @param left The left child
     /// @param right The right child
     /// @return The Poseidon hash of the two children
-    function hashLeftRight(uint256 left, uint256 right) internal pure returns (uint256) {
+    function hashLeftRight(uint256 left, uint256 right) internal view returns (uint256) {
         return PoseidonT3.hash([left, right]);
     }
 }

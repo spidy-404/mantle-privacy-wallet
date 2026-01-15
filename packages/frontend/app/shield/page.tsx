@@ -64,6 +64,7 @@ export default function ShieldPage() {
     const [withdrawing, setWithdrawing] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [status, setStatus] = useState('');
 
     // Withdraw form state
     const [withdrawNote, setWithdrawNote] = useState('');
@@ -136,6 +137,7 @@ export default function ShieldPage() {
             setWithdrawing(true);
             setError('');
             setSuccess('');
+            setStatus('Parsing deposit note...');
 
             // Parse deposit note
             const note = JSON.parse(withdrawNote);
@@ -143,15 +145,18 @@ export default function ShieldPage() {
 
             // Create indexer client
             const indexer = createIndexerClient({
-                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'http://localhost:3001',
+                apiUrl: process.env.NEXT_PUBLIC_INDEXER_API || 'https://indexer-mantle.onrender.com',
             });
 
+            setStatus('Fetching Merkle path from indexer...');
             console.log('📡 Fetching Merkle path from indexer...');
 
             // Get Merkle path for this commitment
             const merklePath = await indexer.getMerklePath(note.commitment);
 
             console.log('✅ Merkle path retrieved:', merklePath);
+
+            setStatus('Verifying Merkle root...');
 
             // Get current Merkle root from contract
             const contractRoot = await publicClient!.readContract({
@@ -165,18 +170,19 @@ export default function ShieldPage() {
 
             // Verify roots match
             if (BigInt(merklePath.root) !== contractRoot) {
+                setStatus('');
                 setError('Merkle root mismatch. Tree may be out of sync. Please try again.');
                 return;
             }
 
             console.log('✅ Merkle root verified!');
 
-            // Circuit files hosted on GitHub Releases
-            const CIRCUIT_WASM_URL = 'https://github.com/spidy-404/mantle-privacy-wallet/releases/download/v1.0.0-circuits/withdraw.wasm';
-            const CIRCUIT_ZKEY_URL = 'https://github.com/spidy-404/mantle-privacy-wallet/releases/download/v1.0.0-circuits/withdraw.zkey';
+            // Circuit files hosted in public folder
+            const CIRCUIT_WASM_URL = '/circuits/withdraw.wasm';
+            const CIRCUIT_ZKEY_URL = '/circuits/withdraw.zkey';
 
+            setStatus('Generating ZK proof... (30-60 seconds)');
             console.log('🔐 Generating ZK proof... (this may take 30-60 seconds)');
-            setError('Generating ZK proof... This may take 30-60 seconds. Please wait.');
 
             // Generate ZK proof
             const proof = await generateWithdrawProof({
@@ -195,8 +201,8 @@ export default function ShieldPage() {
             // Convert proof to calldata format
             const calldata = proofToCalldata(proof);
 
+            setStatus('Submitting withdrawal transaction...');
             console.log('📝 Submitting withdrawal transaction...');
-            setError('Proof generated! Submitting withdrawal transaction...');
 
             // Submit withdrawal transaction
             const hash = await walletClient.writeContract({
@@ -213,17 +219,32 @@ export default function ShieldPage() {
             });
 
             console.log('Withdrawal tx:', hash);
+            setStatus('Waiting for confirmation...');
 
-            // Wait for confirmation
-            await publicClient!.waitForTransactionReceipt({ hash });
-
-            setError('');
-            setSuccess(`Withdrawal successful! ${formatEther(BigInt(note.amount))} MNT sent to ${recipient}. Transaction: ${hash}`);
+            // Try to wait for confirmation with retries
+            try {
+                await publicClient!.waitForTransactionReceipt({
+                    hash,
+                    timeout: 60_000, // 60 second timeout
+                    pollingInterval: 2_000, // Poll every 2 seconds
+                });
+                setSuccess(`Withdrawal successful! ${formatEther(BigInt(note.amount))} MNT sent to ${recipient}. Transaction: ${hash}`);
+            } catch (receiptError: any) {
+                // Transaction was submitted but receipt not found yet - this is still a success
+                console.log('Receipt not found immediately, but tx was submitted:', receiptError);
+                setSuccess(`Withdrawal submitted! ${formatEther(BigInt(note.amount))} MNT should arrive at ${recipient} shortly. Transaction: ${hash}`);
+            }
         } catch (err: any) {
             console.error('Withdraw error:', err);
-            setError(err?.message || 'Failed to withdraw');
+            // Don't show TransactionReceiptNotFoundError as an error if tx was already submitted
+            if (err?.name === 'TransactionReceiptNotFoundError') {
+                setSuccess(`Withdrawal likely successful! Check your wallet for incoming funds.`);
+            } else {
+                setError(err?.message || 'Failed to withdraw');
+            }
         } finally {
             setWithdrawing(false);
+            setStatus('');
         }
     };
 
@@ -368,7 +389,14 @@ export default function ShieldPage() {
                     </div>
                 )}
 
-                {/* Error/Success Messages */}
+                {/* Status/Error/Success Messages */}
+                {status && (
+                    <div className="mt-6 bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 flex items-center gap-3">
+                        <div className="animate-spin h-5 w-5 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+                        <p className="text-blue-300 text-sm">{status}</p>
+                    </div>
+                )}
+
                 {error && (
                     <div className="mt-6 bg-red-900/20 border border-red-700/50 rounded-lg p-4">
                         <p className="text-red-300 text-sm">{error}</p>

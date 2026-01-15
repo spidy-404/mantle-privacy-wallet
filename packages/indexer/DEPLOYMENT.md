@@ -32,7 +32,7 @@ CHAIN_ID=5003
 
 # Contract Addresses (required)
 ERC5564_ANNOUNCER_ADDRESS=0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259
-SHIELDED_POOL_ADDRESS=0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19
+SHIELDED_POOL_ADDRESS=0xc6277cF453bE422e6BC04D4ff171840069c845f2
 
 # Scanning Configuration (optional)
 START_BLOCK=11394476
@@ -67,7 +67,7 @@ WS_PORT=3002
    railway variables set DATABASE_URL="your-database-url"
    railway variables set RPC_URL="https://rpc.sepolia.mantle.xyz"
    railway variables set ERC5564_ANNOUNCER_ADDRESS="0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259"
-   railway variables set SHIELDED_POOL_ADDRESS="0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19"
+   railway variables set SHIELDED_POOL_ADDRESS="0xc6277cF453bE422e6BC04D4ff171840069c845f2"
    railway variables set CHAIN_ID="5003"
    railway variables set START_BLOCK="11394476"
    ```
@@ -122,7 +122,7 @@ WS_PORT=3002
    fly secrets set DATABASE_URL="your-database-url"
    fly secrets set RPC_URL="https://rpc.sepolia.mantle.xyz"
    fly secrets set ERC5564_ANNOUNCER_ADDRESS="0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259"
-   fly secrets set SHIELDED_POOL_ADDRESS="0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19"
+   fly secrets set SHIELDED_POOL_ADDRESS="0xc6277cF453bE422e6BC04D4ff171840069c845f2"
    fly secrets set CHAIN_ID="5003"
    fly secrets set START_BLOCK="11394476"
    ```
@@ -151,7 +151,7 @@ Use Docker for any platform that supports containers.
      -e DATABASE_URL="your-database-url" \
      -e RPC_URL="https://rpc.sepolia.mantle.xyz" \
      -e ERC5564_ANNOUNCER_ADDRESS="0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259" \
-     -e SHIELDED_POOL_ADDRESS="0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19" \
+     -e SHIELDED_POOL_ADDRESS="0xc6277cF453bE422e6BC04D4ff171840069c845f2" \
      -e CHAIN_ID="5003" \
      -e START_BLOCK="11394476" \
      mantle-privacy-indexer

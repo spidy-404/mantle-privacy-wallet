@@ -213,6 +213,28 @@ app.get('/api/nullifier/:nullifierHash', async (req, res) => {
     }
 });
 
+// Manually trigger Merkle tree rebuild
+app.post('/api/rebuild-tree', async (req, res) => {
+    try {
+        if (!merkleTree) {
+            res.status(503).json({ error: 'Merkle tree not initialized' });
+            return;
+        }
+
+        console.log('🔄 Manual Merkle tree rebuild triggered...');
+        await merkleTree.buildFromDatabase();
+
+        res.json({
+            success: true,
+            message: 'Merkle tree rebuilt successfully',
+            root: merkleTree.getCurrentRoot(),
+            leafCount: merkleTree.getLeafCount(),
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export function startServer(port: number = 3001) {
     app.listen(port, () => {
         console.log(`🚀 API server running on http://localhost:${port}`);

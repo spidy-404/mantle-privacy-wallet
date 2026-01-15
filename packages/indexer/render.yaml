@@ -17,7 +17,7 @@ services:
       - key: ERC5564_ANNOUNCER_ADDRESS
         value: 0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259
       - key: SHIELDED_POOL_ADDRESS
-        value: 0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19
+        value: 0xc6277cF453bE422e6BC04D4ff171840069c845f2
       - key: START_BLOCK
         value: 11394476
       - key: BLOCKS_PER_SCAN

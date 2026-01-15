@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { buildPoseidon } from 'circomlibjs';
-import { keccak256, numberToHex, pad } from 'viem';
 
 const prisma = new PrismaClient();
 
@@ -39,23 +38,17 @@ export class MerkleTreeBuilder {
     }
 
     private hash(left: string, right: string): string {
-        // Use Keccak256 mod field size (matches the placeholder in contract)
-        // TODO: Replace with real Poseidon once contract is updated
-        const FIELD_SIZE = BigInt('21888242871839275222246405745257275088548364400416034343698204186575808495617');
+        // Use real Poseidon hash (matches the contract with deployed Poseidon)
+        if (!this.poseidon) {
+            throw new Error('Poseidon hasher not initialized. Call initialize() first.');
+        }
 
         const leftBigInt = BigInt(left);
         const rightBigInt = BigInt(right);
 
-        // Convert to 32-byte hex strings (like abi.encodePacked in Solidity)
-        const leftHex = pad(numberToHex(leftBigInt), { size: 32 });
-        const rightHex = pad(numberToHex(rightBigInt), { size: 32 });
-
-        // Concat and hash
-        const combined = (leftHex + rightHex.slice(2)) as `0x${string}`; // Remove 0x from right
-        const hashHex = keccak256(combined);
-        const hashBigInt = BigInt(hashHex);
-
-        return (hashBigInt % FIELD_SIZE).toString();
+        // Compute Poseidon hash
+        const hashResult = this.poseidon([leftBigInt, rightBigInt]);
+        return this.poseidon.F.toString(hashResult);
     }
 
     async buildFromDatabase(): Promise<void> {
@@ -91,47 +84,63 @@ export class MerkleTreeBuilder {
             return null;
         }
 
-        const leafIndex = Number(deposit.leafIndex);
-        if (leafIndex >= this.leaves.length) {
+        const targetLeafIndex = Number(deposit.leafIndex);
+        if (targetLeafIndex >= this.leaves.length) {
             return null;
         }
 
+        // Use incremental tree algorithm matching the contract exactly
+        // We need to track filledSubtrees after each insertion to get correct siblings
+        const filledSubtrees: string[] = [...this.zeroHashes.slice(0, TREE_DEPTH)];
+
+        // Store the filledSubtrees state BEFORE each leaf insertion
+        // This is needed because when leaf N is inserted, its left siblings
+        // are the filledSubtrees values from BEFORE leaf N was inserted
+        const filledSubtreesHistory: string[][] = [];
+
+        // Insert all leaves up to the current state
+        for (let leafIdx = 0; leafIdx < this.leaves.length; leafIdx++) {
+            // Save state BEFORE this insertion
+            filledSubtreesHistory.push([...filledSubtrees]);
+
+            let currentIndex = leafIdx;
+            let currentHash = this.leaves[leafIdx];
+
+            for (let level = 0; level < TREE_DEPTH; level++) {
+                if (currentIndex % 2 === 0) {
+                    // Even index: we're on the left (READ before UPDATE)
+                    const right = filledSubtrees[level];
+                    filledSubtrees[level] = currentHash;
+                    currentHash = this.hash(currentHash, right);
+                } else {
+                    // Odd index: we're on the right, pair with left sibling
+                    currentHash = this.hash(filledSubtrees[level], currentHash);
+                }
+                currentIndex = Math.floor(currentIndex / 2);
+            }
+        }
+
+        // Build the Merkle path for the target leaf
+        // The sibling at each level is ALWAYS the filledSubtrees value BEFORE our leaf was inserted
+        // This is because the contract reads filledSubtrees[i] BEFORE updating it
         const pathElements: string[] = [];
         const pathIndices: number[] = [];
-
-        let currentIndex = leafIndex;
-        let currentHash = this.leaves[leafIndex];
+        let currentIndex = targetLeafIndex;
 
         for (let level = 0; level < TREE_DEPTH; level++) {
             const isLeft = currentIndex % 2 === 0;
-            const siblingIndex = isLeft ? currentIndex + 1 : currentIndex - 1;
-
-            let siblingHash: string;
-            if (siblingIndex < this.leaves.length) {
-                // Sibling exists in tree
-                siblingHash = this.leaves[siblingIndex];
-            } else {
-                // Use zero hash for empty sibling
-                siblingHash = this.zeroHashes[level];
-            }
-
-            pathElements.push(siblingHash);
+            // Always use the filledSubtrees state from BEFORE this leaf was inserted
+            pathElements.push(filledSubtreesHistory[targetLeafIndex][level]);
             pathIndices.push(isLeft ? 0 : 1);
-
-            // Compute parent hash
-            const leftHash = isLeft ? currentHash : siblingHash;
-            const rightHash = isLeft ? siblingHash : currentHash;
-            currentHash = this.hash(leftHash, rightHash);
-
             currentIndex = Math.floor(currentIndex / 2);
         }
 
         return {
             pathElements,
             pathIndices,
-            root: this.getCurrentRoot(), // Use the actual root from incremental tree
-            leaf: this.leaves[leafIndex],
-            leafIndex,
+            root: this.getCurrentRoot(),
+            leaf: this.leaves[targetLeafIndex],
+            leafIndex: targetLeafIndex,
         };
     }
 
@@ -140,42 +149,27 @@ export class MerkleTreeBuilder {
             return this.zeroHashes[TREE_DEPTH];
         }
 
-        // Simulate incremental tree construction like the contract
-        // This matches the contract's insert() function logic
-        const filledSubtrees: { [level: number]: string } = {};
-
-        // Initialize with zero hashes
-        for (let i = 0; i < TREE_DEPTH; i++) {
-            filledSubtrees[i] = this.zeroHashes[i];
-        }
-
+        // Incremental tree algorithm matching the contract EXACTLY
+        const filledSubtrees: string[] = [...this.zeroHashes.slice(0, TREE_DEPTH)];
         let root = this.zeroHashes[TREE_DEPTH];
 
-        // Process each leaf incrementally (like contract does)
-        for (let leafIndex = 0; leafIndex < this.leaves.length; leafIndex++) {
-            let currentIndex = leafIndex;
-            let currentLevelHash = this.leaves[leafIndex];
+        for (let leafIdx = 0; leafIdx < this.leaves.length; leafIdx++) {
+            let currentIndex = leafIdx;
+            let currentHash = this.leaves[leafIdx];
 
             for (let level = 0; level < TREE_DEPTH; level++) {
-                let left: string;
-                let right: string;
-
                 if (currentIndex % 2 === 0) {
-                    // Left side - store this hash
-                    left = currentLevelHash;
-                    right = filledSubtrees[level];
-                    filledSubtrees[level] = currentLevelHash;
+                    // Even: left = current, right = filledSubtrees (READ before UPDATE)
+                    const right = filledSubtrees[level];
+                    filledSubtrees[level] = currentHash;
+                    currentHash = this.hash(currentHash, right);
                 } else {
-                    // Right side - pair with stored left
-                    left = filledSubtrees[level];
-                    right = currentLevelHash;
+                    // Odd: left = filledSubtrees, right = current
+                    currentHash = this.hash(filledSubtrees[level], currentHash);
                 }
-
-                currentLevelHash = this.hash(left, right);
                 currentIndex = Math.floor(currentIndex / 2);
             }
-
-            root = currentLevelHash;
+            root = currentHash;
         }
 
         return root;

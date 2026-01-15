@@ -1,297 +1,340 @@
 # Mantle Privacy Wallet
 
-A complete stealth payments protocol on Mantle Network implementing the ERC-5564 standard with optional ZK-based amount hiding.
+A complete privacy-preserving payment system on Mantle Network combining **stealth addresses** (ERC-5564) for recipient privacy and **zero-knowledge proofs** (Groth16) for amount privacy.
 
-## Overview
+## What This Project Does
 
-This protocol enables private, non-interactive transfers of MNT and ERC-20 tokens where only the sender and recipient can link a payment to a recipient identity, while all on-chain activity remains publicly verifiable.
+| Feature | Privacy Provided |
+|---------|-----------------|
+| **Stealth Addresses** | Hides WHO receives payments |
+| **ZK Shielded Pool** | Hides HOW MUCH is being sent |
 
-## Features
+**Result**: Complete transaction privacy - sender, recipient, and amount are all hidden from blockchain observers.
 
-- ✅ **ERC-5564 Stealth Addresses** - Hide recipient identity using elliptic curve cryptography
-- ✅ **Web Frontend** - Next.js app with wallet connection and payment flows
-- ✅ **Mantle Network** - Deployed and working on Mantle Sepolia testnet
-- ✅ **Send/Receive** - Full UI for sending and scanning private payments
-- ✅ **ZK Shielded Pool** - Hide transaction amounts using zero-knowledge proofs (Groth16 + Poseidon)
-- ✅ **Indexer Service** - 100x faster scanning with PostgreSQL + REST API + WebSocket
+---
 
-## Project Structure
+## Quick Links
 
-This is a monorepo containing multiple packages:
+- [Full Technical Architecture](./docs/ARCHITECTURE.md) - How everything works
+- [Demo & Pitch Script](./docs/DEMO_PITCH.md) - Step-by-step demo guide
+- [Indexer Deployment](./packages/indexer/DEPLOYMENT.md) - Deploy the indexer service
 
-```
-mantle-privacy-wallet/
-├── packages/
-│   ├── contracts/          # Foundry smart contracts (Stealth + ZK)
-│   ├── sdk/                # TypeScript SDK (crypto + ZK prover)
-│   ├── circuits/           # Circom ZK circuits (Groth16)
-│   ├── indexer/            # Event indexing service (ready for deployment)
-│   └── frontend/           # Next.js frontend (fully functional)
-```
+---
 
-## Getting Started
+## Live Demo
+
+**Frontend**: https://mantle-privacy-wallet.vercel.app (or run locally)
+**Network**: Mantle Sepolia Testnet (Chain ID: 5003)
+
+---
+
+## Local Setup (For Judges/Organizers)
+
+Setting up locally gives you full control and the best demo experience. Follow these steps:
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
-- Foundry (forge, cast, anvil)
+| Tool | Version | Installation |
+|------|---------|--------------|
+| Node.js | >= 18.0 | [nodejs.org](https://nodejs.org) |
+| pnpm | >= 8.0 | `npm install -g pnpm` |
+| PostgreSQL | >= 14 | [postgresql.org](https://postgresql.org/download) or Docker |
+| Git | Any | [git-scm.com](https://git-scm.com) |
 
-### Installation
+### Step 1: Clone and Install
 
 ```bash
 # Clone the repository
-git clone git@github.com:spidy-404/mantle-privacy-wallet.git
+git clone https://github.com/spidy-404/mantle-privacy-wallet.git
 cd mantle-privacy-wallet
 
-# Install dependencies
+# Install all dependencies
 pnpm install
-```
 
-### Building
-
-```bash
 # Build all packages
 pnpm build
-
-# Build contracts only
-pnpm contracts:build
-
-# Build SDK only
-cd packages/sdk && pnpm build
 ```
 
-### Testing
+### Step 2: Set Up PostgreSQL Database
 
+**Option A: Using Docker (Recommended)**
 ```bash
-# Test all packages
-pnpm test
+# Start PostgreSQL container
+docker run --name privacy-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=privacy_indexer \
+  -p 5432:5432 \
+  -d postgres:14
 
-# Test contracts
-pnpm contracts:test
-
-# Test SDK
-pnpm sdk:test
+# Verify it's running
+docker ps
 ```
 
-### Running the Frontend
-
+**Option B: Using Local PostgreSQL**
 ```bash
-# Navigate to frontend package
-cd packages/frontend
+# Create database
+createdb privacy_indexer
 
-# Start development server
-pnpm dev
-
-# Open http://localhost:3000 in your browser
+# Or via psql
+psql -c "CREATE DATABASE privacy_indexer;"
 ```
 
-**Using the App:**
-
-1. **Connect Wallet**: Click "Connect Wallet" and connect MetaMask to Mantle Sepolia
-2. **Generate Keys**: Go to "Keys" page and generate your stealth keypairs
-3. **Get Testnet MNT**: Visit [Mantle Faucet](https://faucet.mantle.xyz) for test tokens
-4. **Share Meta-Address**: Copy your stealth meta-address from the Keys page
-5. **Send Payment**: Go to "Send", enter recipient's meta-address and amount
-6. **Receive Payment**: Go to "Receive" and click "Scan for Payments"
-7. **Withdraw**: Click "Withdraw" on any discovered payments
-
-## Smart Contracts
-
-### ERC5564Announcer
-
-Emits standardized `Announcement` events for stealth payments following the ERC-5564 specification.
-
-### StealthPay
-
-Helper contract for sending MNT and ERC-20 tokens to stealth addresses with automatic announcements.
-
-### Groth16Verifier
-
-ZK-SNARK verifier contract auto-generated from the withdraw circuit. Verifies zero-knowledge proofs for shielded withdrawals.
-
-### ShieldedPool
-
-Zero-knowledge based pool for hiding transaction amounts using Groth16 proofs and Poseidon Merkle trees. Supports fixed denominations (0.1, 1, 10 MNT) for deposit/withdrawal with full amount privacy.
-
-## SDK Usage
-
-```typescript
-import {
-  generateViewingKeypair,
-  generateSpendingKeypair,
-  generateStealthMetaAddress,
-  generateStealthAddress,
-  scanAnnouncements,
-} from '@mantle-privacy/sdk';
-
-// Recipient: Generate keys
-const viewingKeypair = generateViewingKeypair();
-const spendingKeypair = generateSpendingKeypair();
-const metaAddress = generateStealthMetaAddress(
-  viewingKeypair.publicKey,
-  spendingKeypair.publicKey
-);
-
-// Sender: Generate stealth address
-const { stealthAddress, ephemeralPubKey, metadata } = generateStealthAddress(metaAddress);
-
-// Send payment to stealthAddress...
-
-// Recipient: Scan for payments
-const payments = await scanAnnouncements({
-  viewPriv: viewingKeypair.privateKey,
-  spendPriv: spendingKeypair.privateKey,
-  fromBlock: 0,
-  toBlock: 'latest',
-});
-```
-
-## Deployment
-
-### Mantle Sepolia Testnet
-
-Contracts are deployed on Mantle Sepolia testnet:
-
-- **ERC5564Announcer**: [`0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259`](https://sepolia.mantlescan.xyz/address/0x53aCb6c2C0f12A748DB84fbA00bf29d66b3B5259)
-- **StealthPay**: [`0x8370a0f6070A22189CfA5259dF16eF5123b29691`](https://sepolia.mantlescan.xyz/address/0x8370a0f6070A22189CfA5259dF16eF5123b29691)
-- **Groth16Verifier**: [`0xe882083921eA55cC530E48f282756d531c48Ee4c`](https://sepolia.mantlescan.xyz/address/0xe882083921eA55cC530E48f282756d531c48Ee4c)
-- **ShieldedPool**: [`0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19`](https://sepolia.mantlescan.xyz/address/0xa19cEbb855D7Ec92eB24b9DD33Fd3548CB458C19)
-
-**Chain ID**: 5003
-**RPC URL**: https://rpc.sepolia.mantle.xyz
-**Explorer**: https://sepolia.mantlescan.xyz
-
-### Deploying Contracts
-
-```bash
-cd packages/contracts
-
-# Deploy to local testnet (anvil)
-pnpm deploy:local
-
-# Deploy to Mantle Sepolia
-pnpm deploy:testnet
-```
-
-### Deploying Indexer Service
-
-The indexer service provides 100x faster scanning compared to direct blockchain queries. See the [Indexer Deployment Guide](./packages/indexer/DEPLOYMENT.md) for detailed instructions.
-
-**Quick Start (Docker):**
+### Step 3: Configure the Indexer
 
 ```bash
 cd packages/indexer
 
-# Create .env file with your configuration
+# Copy example environment file
 cp .env.example .env
-
-# Run with Docker Compose
-docker-compose up -d
 ```
 
-**Deployment Options:**
-- Railway (recommended) - One-click deployment
-- Render - Free tier available
-- Fly.io - Global edge deployment
-- Docker - Any container platform
-- VPS - Full control (DigitalOcean, AWS, etc.)
+Edit `.env` with your settings:
+```env
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/privacy_indexer"
 
-See [packages/indexer/DEPLOYMENT.md](./packages/indexer/DEPLOYMENT.md) for platform-specific instructions.
+# Mantle Sepolia RPC
+RPC_URL="https://rpc.sepolia.mantle.xyz"
 
-## How It Works
+# Contract addresses (already deployed)
+SHIELDED_POOL_ADDRESS="0xc6277cF453bE422e6BC04D4ff171840069c845f2"
+ANNOUNCER_ADDRESS="0x4e59AfB497B33D3210A498fE12EB2D5ce787530c"
 
-### Stealth Address Generation
+# Server
+PORT=3001
+WS_PORT=3002
+```
 
-1. Recipient publishes a **stealth meta-address** containing viewing and spending public keys
-2. Sender generates an ephemeral keypair and computes a shared secret via ECDH
-3. Sender derives a unique **stealth address** from the shared secret
-4. Sender sends funds to the stealth address and posts an announcement
-5. Recipient scans announcements and reconstructs the stealth private key to withdraw funds
-
-### Privacy Guarantees
-
-- **Unlinkability**: Each payment goes to a unique address
-- **Recipient Privacy**: Only recipient can identify their payments
-- **Amount Privacy** (with shielded pool): Transaction amounts are hidden
-- **Non-Interactive**: Sender doesn't need to coordinate with recipient
-
-### Known Privacy Limitations
-
-Research shows that naive stealth address usage can allow 25-65% deanonymization through:
-- Direct withdrawal to known addresses
-- Timing patterns
-- Gas token usage patterns
-
-**Mitigations:**
-- Use relayers for withdrawals
-- Add random delays
-- Use shielded pool for amounts
-- Avoid predictable patterns
-
-## Development
-
-### Running Tests
+### Step 4: Initialize Database and Start Indexer
 
 ```bash
-# Contract tests
-cd packages/contracts
-forge test -vvv
+# Still in packages/indexer directory
 
-# SDK tests
-cd packages/sdk
-pnpm test
+# Generate Prisma client and create tables
+npx prisma generate
+npx prisma db push
 
-# With coverage
-forge coverage
-pnpm test:coverage
+# Start the indexer
+pnpm dev
 ```
 
-### Code Style
+You should see:
+```
+🚀 Starting Mantle Privacy Indexer...
+✅ Tree built with X leaves
+🚀 API server running on http://localhost:3001
+✅ Indexer fully operational!
+```
+
+### Step 5: Configure and Start Frontend
 
 ```bash
-# Format Solidity code
-cd packages/contracts
-forge fmt
+# Open new terminal
+cd packages/frontend
 
-# Lint TypeScript
-cd packages/sdk
-pnpm lint
+# Copy environment file
+cp .env.example .env
 ```
 
-## Roadmap
+Edit `.env`:
+```env
+# Use local indexer
+NEXT_PUBLIC_INDEXER_API=http://localhost:3001
 
-- [x] Phase 0: Project setup and monorepo structure
-- [x] Phase 1: Core stealth addresses (ERC-5564) - **DEPLOYED TO TESTNET**
-- [x] Phase 2: Frontend MVP - **FULLY FUNCTIONAL**
-- [x] Phase 3: ZK shielded pool - **DEPLOYED & WORKING** (deposit functional, withdraw needs circuit files)
-- [x] Phase 4: Indexer service - **COMPLETE & READY FOR DEPLOYMENT**
-- [ ] Phase 5: Security audit and privacy hardening
-- [ ] Phase 6: Documentation and testing
+# Wallet Connect Project ID (get free at cloud.walletconnect.com)
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
+```
 
-## Security
+Start the frontend:
+```bash
+pnpm dev
+```
 
-This project is in active development and has not been audited. Use at your own risk.
+Open http://localhost:3000 in your browser.
 
-- Smart contracts follow OpenZeppelin best practices
-- Cryptography uses audited libraries (@noble/curves, @noble/hashes)
-- Private keys stored in `.env` (never commit!)
+### Step 6: Set Up MetaMask for Mantle Sepolia
 
-## Contributing
+1. Open MetaMask
+2. Click Network dropdown → "Add Network" → "Add network manually"
+3. Enter:
+   - **Network Name**: Mantle Sepolia
+   - **RPC URL**: https://rpc.sepolia.mantle.xyz
+   - **Chain ID**: 5003
+   - **Currency Symbol**: MNT
+   - **Explorer**: https://sepolia.mantlescan.xyz
 
-Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) first.
+### Step 7: Get Test MNT
+
+Visit the [Mantle Sepolia Faucet](https://faucet.sepolia.mantle.xyz) to get free test MNT.
+
+---
+
+## Testing the Full Flow
+
+### Test 1: Stealth Address Payment
+
+1. **Generate Keys**: Go to `/receive` → Click "Generate New Keys"
+2. **Copy Meta-Address**: Copy your stealth meta-address (starts with `st:eth:`)
+3. **Send Payment**: Go to `/send` → Paste meta-address → Enter amount → Click "Send"
+4. **Scan**: Go back to `/receive` → Click "Scan for Payments"
+5. **Withdraw**: Click "Withdraw" on the discovered payment
+
+### Test 2: ZK Shielded Pool
+
+1. **Deposit**: Go to `/shield` → Select 0.1 MNT → Click "Deposit to Pool"
+2. **SAVE THE NOTE**: Download the deposit note JSON (CRITICAL!)
+3. **Withdraw**: Paste the note → Enter recipient → Click "Withdraw"
+4. **Wait**: ZK proof generation takes 30-60 seconds
+
+---
+
+## Project Structure
+
+```
+mantle-privacy-wallet/
+├── packages/
+│   ├── contracts/       # Solidity smart contracts (Foundry)
+│   │   ├── src/
+│   │   │   ├── ERC5564Announcer.sol   # Stealth announcement events
+│   │   │   ├── StealthPay.sol         # Stealth payment helper
+│   │   │   ├── ShieldedPool.sol       # ZK mixing pool
+│   │   │   └── libraries/
+│   │   │       ├── MerkleTree.sol     # Incremental Merkle tree
+│   │   │       └── Poseidon.sol       # ZK-friendly hash
+│   │   └── script/                    # Deployment scripts
+│   │
+│   ├── sdk/             # TypeScript cryptography SDK
+│   │   └── src/
+│   │       ├── crypto/                # Stealth address math
+│   │       ├── scanner/               # Event scanning
+│   │       └── zk/                    # ZK proof generation
+│   │
+│   ├── circuits/        # Circom ZK circuits
+│   │   └── withdraw.circom            # Withdrawal proof circuit
+│   │
+│   ├── indexer/         # Backend indexing service
+│   │   └── src/
+│   │       ├── scanner/               # Blockchain event watcher
+│   │       │   └── merkle-tree.ts     # Off-chain tree builder
+│   │       └── api/                   # REST API endpoints
+│   │
+│   └── frontend/        # Next.js web application
+│       └── app/
+│           ├── send/                  # Stealth send UI
+│           ├── receive/               # Payment scanner UI
+│           └── shield/                # ZK pool UI
+│
+└── docs/
+    ├── ARCHITECTURE.md  # Technical deep dive
+    └── DEMO_PITCH.md    # Demo script for presentations
+```
+
+---
+
+## Deployed Contracts (Mantle Sepolia)
+
+| Contract | Address | Purpose |
+|----------|---------|---------|
+| ERC5564Announcer | `0x4e59AfB497B33D3210A498fE12EB2D5ce787530c` | Stealth payment events |
+| StealthPay | `0x091870e699a7ca8C4bB16F829fb4fD0aB549CC5C` | Send stealth payments |
+| PoseidonT3 | `0xc08E75955D081bE4Bc43a67f7F029115767B7155` | ZK-friendly hash |
+| ShieldedPool | `0xc6277cF453bE422e6BC04D4ff171840069c845f2` | ZK mixing pool |
+
+**Explorer**: https://sepolia.mantlescan.xyz
+
+---
+
+## Technology Stack
+
+| Component | Technology | Why |
+|-----------|------------|-----|
+| Blockchain | Mantle Sepolia | Low gas, fast, EVM compatible |
+| Contracts | Solidity + Foundry | Industry standard |
+| ZK Proofs | Circom + Groth16 | Battle-tested, small proofs |
+| ZK Hash | Poseidon | 8x cheaper in circuits |
+| SDK | TypeScript | Browser compatible |
+| Crypto | @noble/curves | Audited, pure JS |
+| Frontend | Next.js 14 | Modern React |
+| Wallet | RainbowKit + wagmi | Best wallet UX |
+| Database | PostgreSQL + Prisma | Reliable, type-safe |
+
+---
+
+## Troubleshooting
+
+### "Commitment not found in Merkle tree"
+The indexer hasn't synced the deposit yet. Wait 10 seconds and try again, or manually rebuild:
+```bash
+curl -X POST http://localhost:3001/api/rebuild-tree
+```
+
+### "Merkle root mismatch"
+The indexer is out of sync. Rebuild the tree:
+```bash
+curl -X POST http://localhost:3001/api/rebuild-tree
+```
+
+### ZK proof generation fails
+1. Check browser console for errors
+2. Ensure circuit files exist in `packages/frontend/public/circuits/`
+3. Try refreshing the page and generating again
+
+### Database connection error
+1. Ensure PostgreSQL is running: `docker ps` or `pg_isready`
+2. Check DATABASE_URL in `.env` matches your setup
+
+### MetaMask shows wrong network
+1. Ensure you're on Mantle Sepolia (Chain ID: 5003)
+2. If RPC is slow, try alternative: `https://rpc.sepolia.mantle.xyz`
+
+---
+
+## API Endpoints (Indexer)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/api/status` | GET | Indexer status and stats |
+| `/api/deposits` | GET | List all deposits |
+| `/api/merkle-path/:commitment` | GET | Get Merkle proof for withdrawal |
+| `/api/rebuild-tree` | POST | Force rebuild Merkle tree |
+| `/api/announcements` | GET | List stealth announcements |
+
+---
+
+## Security Notes
+
+- **Not Audited**: This is hackathon code, not production-ready
+- **Deposit Notes**: Lost notes = lost funds forever. Always backup!
+- **Private Keys**: Never share your spending/viewing keys
+- **Test Only**: Only use with testnet funds
+
+---
+
+## Documentation
+
+- **[Architecture Guide](./docs/ARCHITECTURE.md)**: Complete technical overview, SDK functions, flow diagrams
+- **[Demo Script](./docs/DEMO_PITCH.md)**: Step-by-step presentation guide with talking points
+- **[Indexer Deployment](./packages/indexer/DEPLOYMENT.md)**: Deploy to Railway, Render, Fly.io, or Docker
+
+---
+
+## References
+
+- [ERC-5564: Stealth Addresses](https://eips.ethereum.org/EIPS/eip-5564)
+- [Mantle Network Docs](https://docs.mantle.xyz)
+- [Circom Documentation](https://docs.circom.io)
+- [Groth16 Paper](https://eprint.iacr.org/2016/260)
+
+---
 
 ## License
 
 MIT
 
-## References
-
-- [ERC-5564: Stealth Addresses](https://eips.ethereum.org/EIPS/eip-5564)
-- [Mantle Network Documentation](https://docs.mantle.xyz)
-- [Umbra Protocol](https://app.umbra.cash)
-- [Anonymity Analysis of Umbra](https://arxiv.org/abs/2308.01703)
+---
 
 ## Contact
 
-For questions and support, please open an issue on GitHub.
+For questions during judging, please reach out or open an issue.
