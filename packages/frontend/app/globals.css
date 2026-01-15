@@ -1,8 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light theme colors matching reference */
+  --background: #F8F9FC;
+  --foreground: #1A1D29;
+  --card-bg: #FFFFFF;
+  --card-border: #E8EBF0;
+  --sidebar-bg: #1A1D29;
+  --sidebar-text: #8B8D97;
+  --sidebar-active: #FFFFFF;
+
+  /* Accent colors */
+  --accent-primary: #6366F1;
+  --accent-success: #10B981;
+  --accent-warning: #F59E0B;
+  --accent-error: #EF4444;
+
+  /* Pastel accents */
+  --pastel-pink: #FFE4E6;
+  --pastel-peach: #FEF3C7;
+  --pastel-blue: #DBEAFE;
+  --pastel-purple: #EDE9FE;
+  --pastel-green: #D1FAE5;
+
+  /* Dark card (like balance card) */
+  --card-dark: #1A1D29;
+  --card-dark-text: #FFFFFF;
 }
 
 @theme inline {
@@ -12,15 +35,171 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Card styles */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card-dark {
+  background: var(--card-dark);
+  color: var(--card-dark-text);
+  border: none;
+  border-radius: 16px;
+}
+
+/* Button styles */
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #4F46E5;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #D1D5DB;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--card-bg);
+  color: var(--foreground);
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+/* Input styles */
+.input {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Pastel badge styles */
+.badge-pink {
+  background: var(--pastel-pink);
+  color: #BE123C;
+}
+
+.badge-peach {
+  background: var(--pastel-peach);
+  color: #B45309;
+}
+
+.badge-blue {
+  background: var(--pastel-blue);
+  color: #1D4ED8;
+}
+
+.badge-purple {
+  background: var(--pastel-purple);
+  color: #6D28D9;
+}
+
+.badge-green {
+  background: var(--pastel-green);
+  color: #047857;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Status indicator */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot.success {
+  background: var(--accent-success);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.status-dot.warning {
+  background: var(--accent-warning);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.status-dot.error {
+  background: var(--accent-error);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
